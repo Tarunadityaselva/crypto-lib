@@ -126,4 +126,28 @@ class Transaction:
     def is_signed(self):
         return 'signature' in self.tx_data and self.tx_data['signature'] is not None   
 
-    
+    def serialized (self):
+        if not self.is_signed():
+            raise ValueError("Cannot serialize unsigned transaction")
+
+        type = self.infer.type()
+
+        if type == 0:
+            return _serialize_legacy(self.tx_data, self.tx_data['signature'])
+        elif type == 1:
+            return _serialize_eip2930(self.tx_data, self.tx_data['signature'])
+        elif type == 2:
+            return _serialize_eip1559(self.tx_data, self.tx_data['signature'])
+        raise ValueError("Unsupported transaction type: %d" % type)
+
+    def unsigned_serialized(self):
+        type = self.infer_type()
+
+        if type == 0:
+            return serialize_legacy(self.tx_data)
+        elif type == 1:
+            return _serialize_eip2930(self.tx_data)
+        elif type == 2:
+            return _serialize_eip1559(self.tx_data)
+        else:
+            raise ValueError("Unsupported transaction type: %d" % type)
