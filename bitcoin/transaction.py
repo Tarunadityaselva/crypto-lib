@@ -223,3 +223,20 @@ def sign_non_segwit_input(tx_obj: TxObj, tx_in_index: int, private_key: ECPrivat
     return tx_obj
 
 
+#function to create a bitcoin transaction with above attributes
+def create_new_transaction(private_key,unspents, Outputs):
+
+    inputs = []
+    for unspent in unspents:
+        inputs.append(TxIn(unspent.txid, unspent.txindex, b"", unspent.amount))
+        txid = hex_string_to_bytes(unspent.txid)
+        txid = txid[::-1]
+        txid = bytes_to_hex_string(txid)
+        amount = int(unspent.amount).to_bytes(8, byteorder="little")
+        amount = bytes_to_hex_string(amount)
+        inputs.append(TxIn(txid, unspent.txindex, b"", amount))
+
+        tx_unsigned = TxObj(1, inputs, Outputs, 0)
+
+        tx = sign_tx(private_key, tx_unsigned)
+        return tx
