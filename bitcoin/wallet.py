@@ -302,3 +302,30 @@ class MultiSig:
         add_p2sh_vsize = 36 + p2sh_size * 4
         
         return get_unspents(self.address, p2sh_size)
+
+
+    def create_transaction(self, outputs, fee, leftover, combine, message, unspents):
+        #P2SH transaction signed transaction
+
+        return_address = self.segwit_address if any([self.segwit_address, self.segwit_address]) else self.address
+        #create transaction
+        return create_transaction(self, outputs, fee, leftover, combine, message, unspents)
+
+    def prepare_transaction(cls, address, outputs, fee, leftover, combine, message, unspents):
+        #P2SH transaction unsigned transaction
+
+        return_address = self.segwit_address if any([self.segwit_address, self.segwit_address]) else self.address
+        #create transaction
+        return prepare_transaction(self, address, outputs, fee, leftover, combine, message, unspents)
+
+    def sign_transaction(self, transaction, unspents):
+        #sign transaction
+        data = json.loads(transaction)
+
+        unsigned_tx = [Unspent.from_dict(unspent) for unspent in unspents]
+        outputs = [TxOut.from_dict(output) for output in data["outputs"]]
+
+        tx_data = deserialize(outputs)
+        return sign_tx(tx_data, unsigned_tx, self)
+
+        
