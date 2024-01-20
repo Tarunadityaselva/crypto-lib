@@ -186,3 +186,40 @@ def parse_tx_obj(tx_obj: bytes) -> TxObj:
         tx_outs.append(TxOut(amount, script_pubkey))
     locktime = varint_to_int(tx_obj.read(4))
     return TxObj(version, tx_ins, tx_outs, locktime)
+
+#transaction object deserialization
+def deserialize(tx_obj: bytes) -> TxObj:
+    if tx_obj[4] == 0:
+        return parse_tx_obj(tx_obj)
+
+    if segwit_decode(tx_obj[4:42])[0] == 0:
+        return parse_tx_obj(tx_obj)
+
+    if segwit_tx:
+        for tx_in in segwit_tx.tx_ins:
+            tx_in.segwit_input = True
+
+
+#function to sign a transaction
+def sign_input(tx_obj: TxObj, tx_in_index: int, private_key: ECPrivateKey, redeem_script: bytes = None) -> TxObj:
+    tx_in = tx_obj.tx_ins[tx_in_index]
+    if tx_in.segwit_input:
+        return sign_segwit_input(tx_obj, tx_in_index, private_key, redeem_script)
+    return sign_non_segwit_input(tx_obj, tx_in_index, private_key, redeem_script)
+
+#function to sign a non-segwit transaction
+def sign_non_segwit_input(tx_obj: TxObj, tx_in_index: int, private_key: ECPrivateKey, redeem_script: bytes = None) -> TxObj:
+    tx_in = tx_obj.tx_ins[tx_in_index]
+    tx_out = tx_obj.tx_outs[tx_in.txindex]
+    if redeem_script is None:
+        redeem_script = tx_out.script_pubkey
+    sig = private_key.sign_input(tx_obj, tx_in_index, redeem_script)
+    script_sig = (
+        encode_varint(len(sig) + 1)
+        + sig
+        + encode_varint(len(private_key.public_key)) + private_key.public_key
+    )
+    tx_obj.tx_ins[tx_in_index] = TxIn(tx_in.txid, tx_in.txindex, script_sig, tx_out.amount)
+    return tx_obj
+
+
