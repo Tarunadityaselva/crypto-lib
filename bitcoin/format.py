@@ -72,3 +72,7 @@ def multisig_to_redeemscript(public_key, m):
     #check redeemscript length 
     return b'\x50' + int_to_unknown_bytes(m) + b''.join([int_to_unknown_bytes(len(x)) + x for x in public_key]) + b'\x50' + b'\xae'
 
+#multisig to address reverse of redeemscript generation
+def multisig_to_address(public_key, m, version=0):
+    return b58encode_check(ripemd160_sha256(sha256(multisig_to_redeemscript(public_key, m))), version=version)
+

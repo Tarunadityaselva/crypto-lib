@@ -42,3 +42,12 @@ def get_signatures_from_script(script):
             signature = script[i + 1: i + 1 + script[i + 1]]
             signatures.append(signature)
     return signatures
+
+def chunk_data(data, chunk_size):
+    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
+
+#segwit bytes skipping the first 0x00 byte according to BIP141
+def read_segwit_script(script):
+    if script[0] != 0x00:
+        raise ValueError('Invalid segwit script')
+    return script[2:]
